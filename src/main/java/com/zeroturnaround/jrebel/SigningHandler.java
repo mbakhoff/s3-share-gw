@@ -12,17 +12,25 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import com.amazonaws.HttpMethod;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 
 public class SigningHandler extends AbstractHandler {
 
-  private final AmazonS3 s3 = AmazonS3Client.builder()
+  private final AWSCredentialsProvider creds = new AWSCredentialsProviderChain(
+      new EnvironmentVariableCredentialsProvider(),
+      new ProfileCredentialsProvider()
+  );
+
+  private final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
       .withRegion(Regions.US_EAST_1)
-      .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
+      .withCredentials(creds)
       .withPathStyleAccessEnabled(true)
       .build();
 
