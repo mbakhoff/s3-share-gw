@@ -37,7 +37,7 @@ public class SigningHandler extends AbstractHandler {
   private String signUrl(String path) {
     while (path.startsWith("/"))
       path = path.substring(1);
-    var signReq = new GeneratePresignedUrlRequest("share.jc.zt", path);
+    GeneratePresignedUrlRequest signReq = new GeneratePresignedUrlRequest("share.jc.zt", path);
     signReq.setMethod(HttpMethod.GET);
     signReq.setExpiration(Date.from(Instant.now().plus(8, ChronoUnit.HOURS)));
     return s3.generatePresignedUrl(signReq).toExternalForm();
