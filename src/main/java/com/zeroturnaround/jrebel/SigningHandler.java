@@ -12,42 +12,36 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import com.amazonaws.HttpMethod;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSCredentialsProviderChain;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 
 public class SigningHandler extends AbstractHandler {
 
-  private final AWSCredentialsProvider creds = new AWSCredentialsProviderChain(
-      new EnvironmentVariableCredentialsProvider(),
-      new ProfileCredentialsProvider()
-  );
+  private final AmazonS3 s3;
 
-  private final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-      .withRegion(Regions.US_EAST_1)
-      .withCredentials(creds)
-      .withPathStyleAccessEnabled(true)
-      .build();
+  public SigningHandler(AmazonS3 s3) {
+    this.s3 = s3;
+  }
 
   @Override
   public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse resp) throws IOException {
-    String signedUrl = signUrl(request.getPathInfo());
-    resp.setHeader("Location", signedUrl);
+    String signedUrl = signUrl(toKey(request));
     resp.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
+    resp.setHeader("Location", signedUrl);
     request.setHandled(true);
   }
 
-  private String signUrl(String path) {
-    while (path.startsWith("/"))
-      path = path.substring(1);
-    GeneratePresignedUrlRequest signReq = new GeneratePresignedUrlRequest("share.jc.zt", path);
+  private String signUrl(String key) {
+    GeneratePresignedUrlRequest signReq = new GeneratePresignedUrlRequest("share.jc.zt", key);
     signReq.setMethod(HttpMethod.GET);
     signReq.setExpiration(Date.from(Instant.now().plus(8, ChronoUnit.HOURS)));
     return s3.generatePresignedUrl(signReq).toExternalForm();
+  }
+
+  private String toKey(Request request) {
+    String path = request.getPathInfo();
+    while (path.startsWith("/"))
+      path = path.substring(1);
+    return path;
   }
 }
