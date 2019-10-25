@@ -25,6 +25,7 @@ public class S3AuthProxy {
 
     Server server = new Server(port);
     server.setHandler(new HandlerList(
+        new ListingHandler(s3),
         new DirectTransferHandler(s3, directPrefixes),
         new SigningHandler(s3)));
     server.start();
