@@ -28,6 +28,7 @@ public class S3AuthProxy {
         new ListingHandler(s3),
         new DirectTransferHandler(s3, directPrefixes),
         new SigningHandler(s3)));
+    server.insertHandler(new DebugWrapper());
     server.start();
     server.join();
   }

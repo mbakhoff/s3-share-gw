@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -16,6 +18,8 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.util.IOUtils;
 
 public class DirectTransferHandler extends AbstractHandler {
+
+  private static Logger log = LoggerFactory.getLogger(DirectTransferHandler.class);
 
   private final AmazonS3 s3;
   private final List<String> directPrefixes;
@@ -35,6 +39,7 @@ public class DirectTransferHandler extends AbstractHandler {
       response.setContentLengthLong(object.getObjectMetadata().getContentLength());
       IOUtils.copy(object.getObjectContent(), response.getOutputStream());
     } catch (AmazonS3Exception e) {
+      log.warn(httpServletRequest.getRequestURI() + ": " + e.toString());
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       response.getWriter().write(e.getMessage());
     }
