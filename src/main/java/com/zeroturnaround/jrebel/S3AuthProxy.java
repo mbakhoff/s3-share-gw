@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerList;
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -23,14 +25,23 @@ public class S3AuthProxy {
         .withPathStyleAccessEnabled(true)
         .build();
 
-    Server server = new Server(port);
+    Server server = new Server();
+    server.setConnectors(new Connector[] { serverConnector(server, port) });
     server.setHandler(new HandlerList(
         new ListingHandler(s3),
         new DirectTransferHandler(s3, directPrefixes),
         new SigningHandler(s3)));
-    server.insertHandler(new DebugWrapper());
+    server.insertHandler(new SlowRequestLogger());
     server.start();
     server.join();
+  }
+
+  private static ServerConnector serverConnector(Server server, int port) {
+    ServerConnector connector = new ServerConnector(server);
+    connector.setPort(port);
+    connector.setAcceptQueueSize(1024);
+    connector.setIdleTimeout(60_000);
+    return connector;
   }
 
   private static List<String> parsePrefixes(String directPrefixes) {

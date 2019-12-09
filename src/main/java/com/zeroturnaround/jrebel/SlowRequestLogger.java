@@ -13,9 +13,9 @@ import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DebugWrapper extends HandlerWrapper {
+public class SlowRequestLogger extends HandlerWrapper {
 
-  private static Logger log = LoggerFactory.getLogger(DebugWrapper.class);
+  private static Logger log = LoggerFactory.getLogger(SlowRequestLogger.class);
 
   @Override
   public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -26,7 +26,7 @@ public class DebugWrapper extends HandlerWrapper {
     finally {
       long duration = System.currentTimeMillis() - start;
       if (duration > SECONDS.toMillis(30)) {
-        log.warn(request.getPathInfo() + " from " + getRemote(request) + " took " + duration + "ms");
+        log.warn("slow({}ms) '{}' from {}", duration, request.getPathInfo(), getRemote(request));
       }
     }
   }

@@ -39,7 +39,8 @@ public class DirectTransferHandler extends AbstractHandler {
       response.setContentLengthLong(object.getObjectMetadata().getContentLength());
       IOUtils.copy(object.getObjectContent(), response.getOutputStream());
     } catch (AmazonS3Exception e) {
-      log.warn(httpServletRequest.getRequestURI() + ": " + e.toString());
+      if (e.getStatusCode() != 404)
+        log.warn(httpServletRequest.getRequestURI() + ": " + e.toString());
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       response.getWriter().write(e.getMessage());
     }
